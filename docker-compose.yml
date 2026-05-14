@@ -35,8 +35,10 @@ services:
       - "${BACKEND_PORT}:5090"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5090
       - ConnectionStrings__DefaultConnection=Host=db;Port=${DB_PORT};Database=${DB_REDPANDAFLOW};Username=${DB_USER};Password=${DB_PASSWORD}
       - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - Cors__AllowedOrigins__0=http://localhost:${FRONTEND_PORT}
     depends_on:
       - db
     networks:
@@ -50,10 +52,13 @@ services:
       args:
         - FRONTEND_PORT=${FRONTEND_PORT}
     container_name: redpandaflow-frontend
+    environment:
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      - NGINX_ENVSUBST_FILTER=^FRONTEND_PORT$$
     networks:
       - frontend-network
     ports:
-      - "${FRONTEND_PORT}:5173"
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     depends_on:
       - backend
 

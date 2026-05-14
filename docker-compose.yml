@@ -23,6 +23,10 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - backend-network
+    depends_on:
+      - db
 
   backend:
     build: 

@@ -36,9 +36,9 @@ services:
         condition: service_healthy
 
   backend:
-    build: 
-      context: ..
-      dockerfile: redpandaflow-backend/Dockerfile
+    build:
+      context: ../redpandaflow-backend
+      dockerfile: Dockerfile
       args:
         - BACKEND_PORT=${BACKEND_PORT}
     container_name: redpandaflow-backend
@@ -60,8 +60,8 @@ services:
 
   frontend:
     build:
-      context: ..
-      dockerfile: redpandaflow-frontend/Dockerfile
+      context: ../redpandaflow-frontend
+      dockerfile: Dockerfile
       args:
         - FRONTEND_PORT=${FRONTEND_PORT}
     container_name: redpandaflow-frontend

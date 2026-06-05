@@ -59,6 +59,27 @@ docker compose up -d --build
 Database content survives `docker compose down`. Use `docker compose down -v`
 to wipe everything.
 
+## Backup & restore
+
+Two scripts in `scripts/` dump and restore the PostgreSQL database. They read
+the credentials and database name from the running `db` container, so no extra
+configuration is needed — the stack just has to be up (`docker compose up -d`).
+
+Create a backup (custom-format dump written to `scripts/../backups/`):
+
+```bash
+./scripts/backup.sh
+```
+
+Restore a backup (drops and recreates the existing objects):
+
+```bash
+./scripts/restore.sh backups/redpandaflow_db-20260605-110131.dump
+```
+
+The `backups/` directory is git-ignored. Override the defaults with the
+`DB_CONTAINER` and `BACKUP_DIR` environment variables if needed.
+
 ## Related repos
 
 - [redpandaflow-backend](https://github.com/RedPandaFlow/redpandaflow-backend) — ASP.NET Core API

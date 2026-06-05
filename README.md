@@ -35,7 +35,6 @@ docker compose up -d --build
 | `DB_USER`         | PostgreSQL user                                            |
 | `DB_PASSWORD`     | PostgreSQL password                                        |
 | `DB_REDPANDAFLOW` | PostgreSQL database name                                   |
-| `DB_PORT`         | Host port mapped to PostgreSQL                             |
 | `PGADMIN_EMAIL`   | pgAdmin login email                                        |
 | `PGADMIN_PASSWORD`| pgAdmin login password                                     |
 | `PGADMIN_PORT`    | Host port mapped to pgAdmin                                |
@@ -49,7 +48,9 @@ docker compose up -d --build
 - Frontend → `http://localhost:5000`
 - Backend → `http://localhost:5090`
 - pgAdmin → `http://localhost:80`
-- PostgreSQL → `localhost:5432`
+
+PostgreSQL is **not** published to the host: it is only reachable on the
+internal `backend-network` (by the API and pgAdmin).
 
 ## Persistent volumes
 

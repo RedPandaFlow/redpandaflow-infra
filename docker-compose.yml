@@ -6,12 +6,18 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_REDPANDAFLOW}
-    ports:
-      - "${DB_PORT}:5432"
+    restart: unless-stopped
+    expose:
+      - "5432"
     networks:
       - backend-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_REDPANDAFLOW}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   pgadmin:
     image: dpage/pgadmin4
     container_name: redpandaflow-pgadmin
@@ -26,7 +32,8 @@ services:
     networks:
       - backend-network
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   backend:
     build: 
@@ -35,16 +42,18 @@ services:
       args:
         - BACKEND_PORT=${BACKEND_PORT}
     container_name: redpandaflow-backend
+    restart: unless-stopped
     ports:
       - "${BACKEND_PORT}:5090"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5090
-      - ConnectionStrings__DefaultConnection=Host=db;Port=${DB_PORT};Database=${DB_REDPANDAFLOW};Username=${DB_USER};Password=${DB_PASSWORD}
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_REDPANDAFLOW};Username=${DB_USER};Password=${DB_PASSWORD}
       - JwtSettings__SecretKey=${JWT_SECRET_KEY}
       - Cors__AllowedOrigins__0=http://localhost:${FRONTEND_PORT}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - backend-network
       - frontend-network
@@ -56,6 +65,7 @@ services:
       args:
         - FRONTEND_PORT=${FRONTEND_PORT}
     container_name: redpandaflow-frontend
+    restart: unless-stopped
     environment:
       - FRONTEND_PORT=${FRONTEND_PORT}
       - NGINX_ENVSUBST_FILTER=^FRONTEND_PORT$$

@@ -1,18 +1,35 @@
 # RedPandaFlow Infra
 
-Docker Compose stack for RedPandaFlow, a collaborative kanban application.
+Stack Docker Compose de RedPandaFlow, une application de kanban collaboratif.
+
+## Présentation
+
+Ce dépôt orchestre tout le projet avec un unique fichier docker-compose : l'API
+backend, le frontend React, une base de données PostgreSQL et pgAdmin.
+L'architecture complète (services, réseaux, communication) est documentée dans
+le [dépôt documentation](https://github.com/RedPandaFlow/documentation/blob/main/architecture.md),
+et les choix de conteneurisation dans
+[conteneurisation.md](https://github.com/RedPandaFlow/documentation/blob/main/conteneurisation.md).
+
+## Équipe
+
+Travail collaboratif sur l'ensemble du projet (backend, frontend, infra,
+CI/CD, documentation) :
+
+- Nathan FERRE
+- Ylan Dessenne
 
 ## Services
 
 - **db** — PostgreSQL 16 (alpine)
-- **pgadmin** — pgAdmin 4, web UI for the database
-- **backend** — ASP.NET Core API built from [redpandaflow-backend](https://github.com/RedPandaFlow/redpandaflow-backend)
-- **frontend** — React SPA built from [redpandaflow-frontend](https://github.com/RedPandaFlow/redpandaflow-frontend), served by nginx
+- **pgadmin** — pgAdmin 4, interface web pour la base de données
+- **backend** — API ASP.NET Core construite depuis [redpandaflow-backend](https://github.com/RedPandaFlow/redpandaflow-backend)
+- **frontend** — SPA React construite depuis [redpandaflow-frontend](https://github.com/RedPandaFlow/redpandaflow-frontend), servie par nginx
 
-## Run locally
+## Lancement en local
 
-The compose file builds the backend and frontend images from sibling repos, so
-clone all three side by side:
+Le fichier compose construit les images backend et frontend depuis les dépôts
+voisins : il faut donc cloner les trois côte à côte :
 
 ```bash
 RedPandaFlow/
@@ -21,68 +38,69 @@ RedPandaFlow/
 └── redpandaflow-infra/
 ```
 
-Copy `.env.example` to `.env`, fill in the values (DB credentials, JWT secret,
-ports), then:
+Copier `.env.example` vers `.env`, renseigner les valeurs (identifiants de la
+base, secret JWT, ports), puis :
 
 ```bash
 docker compose up -d --build
 ```
 
-## Environment variables
+## Variables d'environnement
 
-| Variable          | Purpose                                                    |
+| Variable          | Rôle                                                       |
 | ----------------- | ---------------------------------------------------------- |
-| `DB_USER`         | PostgreSQL user                                            |
-| `DB_PASSWORD`     | PostgreSQL password                                        |
-| `DB_REDPANDAFLOW` | PostgreSQL database name                                   |
-| `PGADMIN_EMAIL`   | pgAdmin login email                                        |
-| `PGADMIN_PASSWORD`| pgAdmin login password                                     |
-| `PGADMIN_PORT`    | Host port mapped to pgAdmin                                |
-| `BACKEND_PORT`    | Host port mapped to the API                                |
-| `FRONTEND_PORT`   | Host port mapped to the SPA                                |
-| `JWT_SECRET_KEY`  | Signing key for JWT (`openssl rand -base64 48` to generate)|
-| `VITE_API_URL`    | API URL baked into the frontend at build time              |
+| `DB_USER`         | Utilisateur PostgreSQL                                     |
+| `DB_PASSWORD`     | Mot de passe PostgreSQL                                    |
+| `DB_REDPANDAFLOW` | Nom de la base PostgreSQL                                  |
+| `PGADMIN_EMAIL`   | Email de connexion pgAdmin                                 |
+| `PGADMIN_PASSWORD`| Mot de passe de connexion pgAdmin                          |
+| `PGADMIN_PORT`    | Port hôte mappé vers pgAdmin                               |
+| `BACKEND_PORT`    | Port hôte mappé vers l'API                                 |
+| `FRONTEND_PORT`   | Port hôte mappé vers la SPA                                |
+| `JWT_SECRET_KEY`  | Clé de signature des JWT (`openssl rand -base64 48`)       |
+| `VITE_API_URL`    | URL de l'API intégrée au frontend au moment du build       |
 
-## Default ports
+## Ports par défaut
 
 - Frontend → `http://localhost:5000`
 - Backend → `http://localhost:5090`
 - pgAdmin → `http://localhost:80`
 
-PostgreSQL is **not** published to the host: it is only reachable on the
-internal `backend-network` (by the API and pgAdmin).
+PostgreSQL n'est **pas** publié sur l'hôte : il n'est joignable que sur le
+réseau interne `backend-network` (par l'API et pgAdmin).
 
-## Persistent volumes
+## Volumes persistants
 
-- `postgres_data` — database files
-- `pgadmin_data` — pgAdmin configuration
+- `postgres_data` — fichiers de la base de données
+- `pgadmin_data` — configuration de pgAdmin
 
-Database content survives `docker compose down`. Use `docker compose down -v`
-to wipe everything.
+Le contenu de la base survit à `docker compose down`. Utiliser
+`docker compose down -v` pour tout effacer.
 
-## Backup & restore
+## Sauvegarde et restauration
 
-Two scripts in `scripts/` dump and restore the PostgreSQL database. They read
-the credentials and database name from the running `db` container, so no extra
-configuration is needed — the stack just has to be up (`docker compose up -d`).
+Deux scripts dans `scripts/` sauvegardent et restaurent la base PostgreSQL. Ils
+lisent les identifiants et le nom de la base directement dans le conteneur `db`
+en cours d'exécution : aucune configuration supplémentaire n'est nécessaire, il
+suffit que la stack soit démarrée (`docker compose up -d`).
 
-Create a backup (custom-format dump written to `scripts/../backups/`):
+Créer une sauvegarde (dump au format custom écrit dans `scripts/../backups/`) :
 
 ```bash
 ./scripts/backup.sh
 ```
 
-Restore a backup (drops and recreates the existing objects):
+Restaurer une sauvegarde (supprime et recrée les objets existants) :
 
 ```bash
 ./scripts/restore.sh backups/redpandaflow_db-20260605-110131.dump
 ```
 
-The `backups/` directory is git-ignored. Override the defaults with the
-`DB_CONTAINER` and `BACKUP_DIR` environment variables if needed.
+Le dossier `backups/` est ignoré par git. Les valeurs par défaut peuvent être
+surchargées avec les variables d'environnement `DB_CONTAINER` et `BACKUP_DIR`.
 
-## Related repos
+## Dépôts liés
 
-- [redpandaflow-backend](https://github.com/RedPandaFlow/redpandaflow-backend) — ASP.NET Core API
+- [redpandaflow-backend](https://github.com/RedPandaFlow/redpandaflow-backend) — API ASP.NET Core
 - [redpandaflow-frontend](https://github.com/RedPandaFlow/redpandaflow-frontend) — React
-- [documentation](https://github.com/RedPandaFlow/documentation) — project documentation
+- [documentation](https://github.com/RedPandaFlow/documentation) — documentation du projet

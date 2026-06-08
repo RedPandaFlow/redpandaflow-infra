@@ -36,11 +36,7 @@ services:
         condition: service_healthy
 
   backend:
-    build:
-      context: ../redpandaflow-backend
-      dockerfile: Dockerfile
-      args:
-        - BACKEND_PORT=${BACKEND_PORT}
+    image: ghcr.io/redpandaflow/redpandaflow-backend:latest
     container_name: redpandaflow-backend
     restart: unless-stopped
     ports:
@@ -59,11 +55,7 @@ services:
       - frontend-network
 
   frontend:
-    build:
-      context: ../redpandaflow-frontend
-      dockerfile: Dockerfile
-      args:
-        - FRONTEND_PORT=${FRONTEND_PORT}
+    image: ghcr.io/redpandaflow/redpandaflow-frontend:latest
     container_name: redpandaflow-frontend
     restart: unless-stopped
     environment:

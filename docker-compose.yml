@@ -1,0 +1,85 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: redpandaflow-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_REDPANDAFLOW}
+    restart: unless-stopped
+    expose:
+      - "5432"
+    networks:
+      - backend-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_REDPANDAFLOW}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: redpandaflow-pgadmin
+    restart: always
+    ports:
+      - "${PGADMIN_PORT}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - backend-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ../redpandaflow-backend
+      dockerfile: Dockerfile
+      args:
+        - BACKEND_PORT=${BACKEND_PORT}
+    container_name: redpandaflow-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT}:5090"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5090
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_REDPANDAFLOW};Username=${DB_USER};Password=${DB_PASSWORD}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - Cors__AllowedOrigins__0=http://localhost:${FRONTEND_PORT}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend-network
+      - frontend-network
+
+  frontend:
+    build:
+      context: ../redpandaflow-frontend
+      dockerfile: Dockerfile
+      args:
+        - FRONTEND_PORT=${FRONTEND_PORT}
+    container_name: redpandaflow-frontend
+    restart: unless-stopped
+    environment:
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      - NGINX_ENVSUBST_FILTER=^FRONTEND_PORT$$
+    networks:
+      - frontend-network
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    depends_on:
+      - backend
+
+networks:
+    frontend-network:
+    backend-network:
+
+volumes:
+  postgres_data:
+  pgadmin_data:
